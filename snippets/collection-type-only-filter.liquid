@@ -1,0 +1,27 @@
+{% comment %}
+ID Addition to refine Collection to see only of a single type.
+Requires collection
+{% endcomment %}
+
+{% assign type_list = collection.all_types %}
+{% if type_list.size > 1 %}
+<div class="filters-toolbar__item-child">
+    <label class="filters-toolbar__label select-label" for="ShowOnly">Show Only</label>
+        <div class="filters-toolbar__input-wrapper select-group">
+        <select name="show_only" id="ShowOnly"
+                class="filters-toolbar__input hidden"
+                aria-describedby="a11y-refresh-page-message a11y-selection-message"
+                data-select-input>
+                <option value="" selected>All Types</option>
+                {% for type in type_list %}
+                    <option value="{{ type | url_for_type }}">{{ type }}</option>
+                {% endfor %}
+        </select>
+        {% include 'icon-chevron-down' %}
+    </div>
+</div>
+{% endif %}
+
+{% comment %}
+	<select name="show_only" id="ShowOnly" class="filters-toolbar__input" aria-describedby="a11y-refresh-page-message a11y-selection-message" data-default-sortby="best-selling" data-select-input="" style="width: 121px;">  
+{% endcomment %}

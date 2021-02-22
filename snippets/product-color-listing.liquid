@@ -1,0 +1,86 @@
+{% comment %}
+    ID Attempt to display the colours included in a product as a swatches div to be displayed in product-card-grid.liquid
+    Based upon Joe Dempsey's Shopify Add Color Swatches To Collection Pages https://gist.github.com/joe-dempsey/6ef2e9e047e8e95fde0342b7667b8289
+    Should Consider A Warning Version, which would need to run through valid CSS colors.
+    Usage {% include 'product-color-listing.liquid', product: product %}
+{% endcomment %}
+
+{% comment %}NB Probably don't need the - liquid tag{% endcomment %}
+{%- liquid
+-%}
+{% comment %}
+    Assign what we variants we are looking for, and create an array of them called option_titles
+    option_titles, used to create an options, variant name lookup (JD)
+    multicolor_vars, used to create a multicolor, color name lookup (ID)
+    has_colors, a fallback for if option_values.size does not have a 0 value before option_values is created
+    bw, box-size based upon em, default is 1em. Would also need revision in css.
+    min_to_show (default = 1), change to two if you want to ignore the default color.
+{% endcomment %}
+{% capture option_titles %}Color,color,Colour,colour{% endcapture %}
+{% capture multicolor_vars %}Multicolor,multicolor,Multicolour,multicolour{% endcapture %}
+{% assign option_titles = option_titles | split: ',' %}
+{% assign multicolor_vars = multicolor_vars | split: ',' %}
+{% assign has_colors = 0 %}
+{% assign bw = 1 %}
+{% assign min_to_show = 1 %}
+
+{% for option in product.options %}
+    {% if option_titles contains option %}
+        {% capture option_index %}option{{ forloop.index }}{% endcapture %}
+        {% assign has_colors = 1 %}
+        {% assign option_values = product.variants | map: option_index | uniq %}
+    {% endif %}
+{% endfor %}
+
+{% comment %}
+If number of colors is greater than min-show, then display the colour options
+{% endcomment %}
+
+{% if has_colors == 1 %}
+    {% if option_values.size >= min_to_show %}
+        <ol class="col-swatches">
+            {% comment %}
+                Foreach, create the colour definitions, in a style tag, scoped.
+            {% endcomment %}
+            <style type="text/css" scoped>
+              {% for opt in option_values %}
+                {% if multicolor_vars contains opt %}
+                    .colswatch-multicolor { background-image: url("{{ 'colswatch-multicolor.png' | asset_url }}"); background-size: 100% 100%; }
+                {% else %}
+                    .colswatch-{{ opt | downcase | replace: ' ', '' | replace: '/', '-' }} {
+                      {% assign cols = opt | downcase | split: '/' %}
+                      {% assign colmulti = 100 | divided_by: cols.size %}
+                      /* {{ colmulti }} */
+                      box-shadow:
+                        {% for col in cols %}
+                            {% assign temp_rez = colmulti | divided_by: 100 | abs %}
+                            {% if forloop.index == cols.size %}
+                                inset 1em 0 0 {{ col }};
+                            {% else %}
+                                inset 0.{{ forloop.index | times: colmulti }}em 0 0 {{ col }},
+                            {% endif %}
+                            {% comment %} inset {{ forloop.index | times: colmulti | times: bw }}em 0 0 {{ col }}, {% endcomment %}
+                        {% endfor %}
+                    }
+                {% endif %}
+              {% endfor %}
+            </style>
+            {% comment %}
+                End of style definitions
+            {% endcomment %}
+            {% comment %}
+                Start of tag creations, Foreach create tag either with full colour name or by using multicolor, reference the style tag just created.
+            {% endcomment %}
+            {% for opt in option_values %}
+                {% if multicolor_vars contains opt %}
+                    <li title="Multicolour" class="colswatch-multicolor"><abbr>Multicolour</abbr></li>
+                {% else %}
+                    <li title="{{ opt }}" class="colswatch-{{ opt | downcase | replace: ' ', '' | replace: '/', '-' }}"><abbr>{{ opt }}</abbr></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    {% comment %}
+        End of colswatches, endIf
+    {% endcomment %}
+    {% endif %}
+{% endif %}
